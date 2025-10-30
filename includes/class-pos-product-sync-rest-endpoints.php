@@ -49,6 +49,36 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 	 * Hooks the endpoint registration into rest_api_init.
 	 */
 	public function __construct() {
+
+		// Register the custom query parameter
+		add_filter('rest_product_collection_params', function($params) {
+			$params['pos_product'] = array(
+				'description' => 'Filter products by POS availability',
+				'type'        => 'integer',
+				'default'     => null,
+				'sanitize_callback' => 'absint',
+			);
+			return $params;
+		}, 10, 1);
+
+		// Filter the products based on the parameter
+		add_filter('woocommerce_rest_product_object_query', function($args, $request) {
+			// Check if our custom parameter is set in the request
+			if (isset($request['pos_product']) && !empty($request['pos_product'])) {
+				// Initialize meta_query if it doesn't exist
+				if (!isset($args['meta_query'])) {
+					$args['meta_query'] = array();
+				}
+
+				$args['meta_query'][] = array(
+					'key'     => 'pos_product',
+					'value'   => 1,
+					'compare' => '='
+				);
+			}
+			return $args;
+		}, 10, 2);
+
 		add_action( 'rest_api_init', array( $this, 'register_endpoints' ) );
 	}
 
@@ -123,9 +153,27 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 	 *
 	 * @return bool True if the current user has permission, false otherwise.
 	 */
+
 	public function permissions_check( $request ) {
-		return true;
+		$auth_header = $request->get_header( 'authorization' );
+
+		if ( ! $auth_header ) {
+			return new WP_Error( 'rest_forbidden', 'Authorization header missing', [ 'status' => 401 ] );
+		}
+
+		if ( preg_match( '/Bearer\s(\S+)/', $auth_header, $matches ) ) {
+			$token = $matches[1];
+
+			if ( $token !== BEARER_TOKEN ) {
+				return new WP_Error( 'rest_forbidden', 'Invalid token', [ 'status' => 403 ] );
+			}
+
+			return true;
+		}
+
+		return new WP_Error( 'rest_forbidden', 'Invalid authorization format', [ 'status' => 400 ] );
 	}
+
 
 	/**
 	 * Get the synced product ID by table row ID.
@@ -150,7 +198,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 
 	public function get_products( WP_REST_Request $request ) {
 
-		$url = home_url() . '/wp-json/wc/v3/products/';
+		$url = home_url() . '/wp-json/wc/v3/products/?pos_product=1';
 
 		// Use basic auth headers
 		$headers = [
@@ -186,6 +234,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 		return new WP_REST_Response(
 			array(
 				'status'   => 'success',
+				'data_type'=>  count($data),
 				'home_url' => home_url(),
 				'data'     => $data,
 			),
@@ -244,6 +293,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 
 		return new WP_REST_Response( array(
 			'status' => 'success',
+			'pos_id' => $id,
 			'data'   => $data,
 		), 200 );
 	}
@@ -323,7 +373,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 			);
 		}
 
-		$update_pos_meta = update_post_meta( intval( $product_data['id'] ), 'pos_id', $pos_id );
+		update_post_meta( intval( $product_data['id'] ), 'pos_product', 1 );
 
 		// Insert POS sync record
 		$inserted = $wpdb->insert(
@@ -349,18 +399,17 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 		// Success response
 		return new WP_REST_Response(
 			array(
-				'status'   => 'success',
-				'pos_id'   => $pos_id,
-				'pos_meta' => $update_pos_meta,
-				'data'     => $product_data,
+				'status' => 'success',
+				'pos_id' => $pos_id,
+				'data'   => $product_data,
 			),
 			201
 		);
 	}
 
 	public function update_product( WP_REST_Request $request ) {
+		$pos_id = $request->get_param( 'id' );
 		$body   = $request->get_json_params();
-		$pos_id = isset( $body['pos_id'] ) ? intval( $body['pos_id'] ) : '';
 		$data   = isset( $body['data'] ) ? $body['data'] : '';
 
 		// Validate input
@@ -433,6 +482,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 		return new WP_REST_Response(
 			array(
 				'status' => 'success',
+				'pos_id' => $pos_id,
 				'data'   => $product_data,
 			),
 			200
@@ -443,8 +493,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'pos_product_sync';
 
-		$body   = $request->get_json_params();
-		$pos_id = isset( $body['pos_id'] ) ? intval( $body['pos_id'] ) : '';
+		$pos_id = $request->get_param( 'id' );
 
 		if ( ! $pos_id ) {
 			return new WP_REST_Response( [
@@ -490,7 +539,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 		}
 
 		// Delete POS meta
-		delete_post_meta( intval( $product_id ), 'pos_id', $pos_id );
+		delete_post_meta( intval( $product_id ), 'pos_product' );
 
 		// Delete from custom table
 		$deleted = $wpdb->delete( $table_name, [ 'pos_id' => $pos_id ], [ '%d' ] );
@@ -505,6 +554,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 		return new WP_REST_Response( [
 			'status'  => 'success',
 			'message' => 'Product deleted successfully',
+			'pos_id'  => $pos_id,
 			'data'    => $response_data,
 		], 200 );
 	}
