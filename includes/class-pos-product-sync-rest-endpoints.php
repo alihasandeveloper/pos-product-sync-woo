@@ -1,4 +1,5 @@
 <?php
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -76,6 +77,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 				)
 			)
 		);
+
 		// Single item routes
 
 		register_rest_route(
@@ -145,7 +147,6 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 
 		return $result['product_id'] ?? null;
 	}
-
 
 	public function get_products( WP_REST_Request $request ) {
 
@@ -355,6 +356,157 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 			),
 			201
 		);
+	}
+
+	public function update_product( WP_REST_Request $request ) {
+		$body   = $request->get_json_params();
+		$pos_id = isset( $body['pos_id'] ) ? intval( $body['pos_id'] ) : '';
+		$data   = isset( $body['data'] ) ? $body['data'] : '';
+
+		// Validate input
+		if ( ! $pos_id ) {
+			return new WP_REST_Response(
+				array(
+					'status'  => 'error',
+					'message' => 'POS id is required for product update',
+				),
+				400
+			);
+		}
+
+		$product_id = $this->get_product_id_by_pos( $pos_id );
+
+		if ( ! $product_id ) {
+			return new WP_REST_Response(
+				array(
+					'status'  => 'error',
+					'message' => 'Product not found',
+				),
+				404
+			);
+		}
+
+		if ( ! $data ) {
+			return new WP_REST_Response(
+				array(
+					'status'  => 'error',
+					'message' => 'Product data is required',
+				),
+				400
+			);
+		}
+
+		$api_url = home_url() . '/wp-json/wc/v3/products/' . $product_id;
+
+		// Prepare request args
+		$args = array(
+			'method'  => 'PUT', // Update method
+			'body'    => wp_json_encode( $data ),
+			'headers' => array(
+				'Authorization' => 'Basic ' . base64_encode( $this->consumer_key . ':' . $this->consumer_secret ),
+				'Content-Type'  => 'application/json',
+			),
+			'timeout' => 20,
+		);
+
+		// Call WooCommerce API
+		$response = wp_remote_request( $api_url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'api_error', $response->get_error_message(), [ 'status' => 500 ] );
+		}
+
+		$product_data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		// Handle WooCommerce API errors
+		if ( isset( $product_data['code'] ) && isset( $product_data['message'] ) ) {
+			return new WP_REST_Response(
+				array(
+					'status'     => 'error',
+					'error_code' => $product_data['code'],
+					'message'    => $product_data['message'],
+				),
+				isset( $product_data['data']['status'] ) ? intval( $product_data['data']['status'] ) : 400
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'status' => 'success',
+				'data'   => $product_data,
+			),
+			200
+		);
+	}
+
+	public function delete_product( WP_REST_Request $request ) {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'pos_product_sync';
+
+		$body   = $request->get_json_params();
+		$pos_id = isset( $body['pos_id'] ) ? intval( $body['pos_id'] ) : '';
+
+		if ( ! $pos_id ) {
+			return new WP_REST_Response( [
+				'status'  => 'error',
+				'message' => 'POS id is required for product deletion',
+			], 400 );
+		}
+
+		$product_id = $this->get_product_id_by_pos( $pos_id );
+
+		if ( ! $product_id ) {
+			return new WP_REST_Response( [
+				'status'  => 'error',
+				'message' => 'Product not found',
+			], 404 );
+		}
+
+		$api_url = home_url() . '/wp-json/wc/v3/products/' . $product_id . '?force=true';
+
+		$args = [
+			'method'  => 'DELETE',
+			'headers' => [
+				'Authorization' => 'Basic ' . base64_encode( $this->consumer_key . ':' . $this->consumer_secret ),
+				'Content-Type'  => 'application/json',
+			],
+			'timeout' => 20,
+		];
+
+		$response = wp_remote_request( $api_url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'api_error', $response->get_error_message(), [ 'status' => 500 ] );
+		}
+
+		$response_data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( isset( $response_data['code'] ) && isset( $response_data['message'] ) ) {
+			return new WP_REST_Response( [
+				'status'     => 'error',
+				'error_code' => $response_data['code'],
+				'message'    => $response_data['message'],
+			], isset( $response_data['data']['status'] ) ? intval( $response_data['data']['status'] ) : 400 );
+		}
+
+		// Delete POS meta
+		delete_post_meta( intval( $product_id ), 'pos_id', $pos_id );
+
+		// Delete from custom table
+		$deleted = $wpdb->delete( $table_name, [ 'pos_id' => $pos_id ], [ '%d' ] );
+
+		if ( $deleted === false ) {
+			return new WP_REST_Response( [
+				'status'  => 'error',
+				'message' => 'Failed to delete POS record from database',
+			], 500 );
+		}
+
+		return new WP_REST_Response( [
+			'status'  => 'success',
+			'message' => 'Product deleted successfully',
+			'data'    => $response_data,
+		], 200 );
 	}
 
 }
