@@ -32,11 +32,11 @@ class Pos_Product_Sync_Deactivator
      */
     public static function deactivate()
     {
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'pos_product_sync';
-
-        // Drop the table if it exists
-        $wpdb->query("DROP TABLE IF EXISTS $table_name;");
+//        global $wpdb;
+//        $table_name = $wpdb->prefix . 'pos_product_sync';
+//
+//        // Drop the table if it exists
+//        $wpdb->query("DROP TABLE IF EXISTS $table_name;");
 
 
     }

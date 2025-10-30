@@ -234,7 +234,6 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 		return new WP_REST_Response(
 			array(
 				'status'   => 'success',
-				'data_type'=>  count($data),
 				'home_url' => home_url(),
 				'data'     => $data,
 			),
@@ -513,6 +512,8 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 
 		$api_url = home_url() . '/wp-json/wc/v3/products/' . $product_id . '?force=true';
 
+
+
 		$args = [
 			'method'  => 'DELETE',
 			'headers' => [
@@ -539,7 +540,7 @@ class Pos_Product_Sync_Rest_Endpoints extends WP_REST_Controller {
 		}
 
 		// Delete POS meta
-		delete_post_meta( intval( $product_id ), 'pos_product' );
+		delete_post_meta( intval( $product_id ), 'pos_product' , 1);
 
 		// Delete from custom table
 		$deleted = $wpdb->delete( $table_name, [ 'pos_id' => $pos_id ], [ '%d' ] );
