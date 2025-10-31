@@ -1,0 +1,220 @@
+================================================================================
+                    POS Product Sync REST API Documentation
+================================================================================
+
+Base URL: https://yourdomain.com/wp-json/pos/v1
+
+Authentication:
+  - Bearer Token required in header
+  - Example: Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJhdWQiOiJhcGkuZXhhbXBsZS5jb20iLCJpYXQiOjE2OTg1NjAwMDAsImV4cCI6MTY5ODU2MzYwMH0.4JcF5yO3z5uBvFhOQwI8JrR6qJ8tP9x7yQnPjG4kHhA
+  - Invalid token → 401/403
+
+--------------------------------------------------------------------------------
+ENDPOINTS OVERVIEW
+--------------------------------------------------------------------------------
+METHOD   | ENDPOINT                | DESCRIPTION
+---------|------------------------|--------------------------------
+GET      | /products              | Get all POS-synced products
+GET      | /product/{id}          | Get product by POS ID
+POST     | /product               | Create new product
+PUT      | /product/{id}          | Update product by POS ID
+DELETE   | /product/{id}          | Delete product by POS ID
+
+Filter: ?pos_product=1 → Only synced products
+
+================================================================================
+1. GET ALL POS PRODUCTS
+================================================================================
+GET /products?pos_product=1
+
+JavaScript (Fetch):
+fetch('https://yourdomain.com/wp-json/pos/v1/products?pos_product=1', {
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(r => r.json())
+.then(d => console.log(d));
+
+Success (200):
+{
+  "status": "success",
+  "data": [ /* Array of products */ ]
+}
+
+Errors:
+  401 → Authorization missing
+  403 → Invalid token
+  500 → WooCommerce API error
+
+================================================================================
+2. GET SINGLE PRODUCT
+================================================================================
+GET /product/{pos_id}
+
+JavaScript (Fetch):
+fetch('https://yourdomain.com/wp-json/pos/v1/product/123', {
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(r => r.json())
+.then(d => console.log(d));
+
+Success (200):
+{
+  "status": "success",
+  "pos_id": 123,
+  "data": { /* Full WooCommerce product */ }
+}
+
+Errors:
+  404 → Product not found
+  401/403 → Invalid token
+
+================================================================================
+3. CREATE PRODUCT
+================================================================================
+POST /product
+
+JavaScript (Fetch):
+fetch('https://yourdomain.com/wp-json/pos/v1/product', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    pos_id: 999,
+    data: {
+      name: "Premium T-Shirt",
+      type: "simple",
+      regular_price: "29.99",
+      sku: "TSHIRT-001",
+      manage_stock: true,
+      stock_quantity: 100,
+      categories: [{ id: 15 }],
+      images: [{ src: "https://yoursite.com/tshirt.jpg" }]
+    }
+  })
+})
+.then(r => r.json())
+.then(d => console.log('Created:', d));
+
+Success (201):
+{
+  "status": "success",
+  "pos_id": 999,
+  "data": { /* Created product */ }
+}
+
+Errors:
+  400 → Missing pos_id or data
+  409 → pos_id already exists
+  500 → Failed to insert sync record
+  WooCommerce → Invalid name, price, etc.
+
+================================================================================
+4. UPDATE PRODUCT
+================================================================================
+PUT /product/{pos_id}
+
+JavaScript (Fetch):
+fetch('https://yourdomain.com/wp-json/pos/v1/product/999', {
+  method: 'PUT',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    data: {
+      regular_price: "34.99",
+      stock_quantity: 75
+    }
+  })
+})
+.then(r => r.json())
+.then(d => console.log('Updated:', d));
+
+Success (200):
+{
+  "status": "success",
+  "pos_id": 999,
+  "data": { /* Updated product */ }
+}
+
+Errors:
+  400 → Missing data
+  404 → Product not found
+  WooCommerce → Invalid field values
+
+================================================================================
+5. DELETE PRODUCT
+================================================================================
+DELETE /product/{pos_id}
+
+JavaScript (Fetch):
+fetch('https://yourdomain.com/wp-json/pos/v1/product/999', {
+  method: 'DELETE',
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(r => r.json())
+.then(d => console.log('Deleted:', d));
+
+Success (200):
+{
+  "status": "success",
+  "message": "Product deleted",
+  "pos_id": 999
+}
+
+Errors:
+  400 → Missing pos_id
+  404 → Product not found
+  500 → Failed to delete from sync table
+
+--------------------------------------------------------------------------------
+DATABASE TABLE: wp_pos_product_sync
+--------------------------------------------------------------------------------
+Columns:
+  pos_id     (INT) → Unique ID from POS
+  product_id (INT) → WooCommerce Product ID
+
+Purpose: 1:1 mapping
+
+Post Meta:
+  _pos_product = 1 → Auto-added on create, removed on delete
+
+--------------------------------------------------------------------------------
+ERROR CODES SUMMARY
+--------------------------------------------------------------------------------
+400 → Missing required fields
+401 → Authorization header missing
+403 → Invalid or expired token
+404 → Product not found in sync table
+409 → pos_id already exists
+500 → Database or WooCommerce API error
+woocommerce_rest_* → Validation errors from WooCommerce
+
+--------------------------------------------------------------------------------
+CREATE & UPDATE SUPPORT
+--------------------------------------------------------------------------------
+Supports ALL WooCommerce v3 product attributes:
+  • name, type, price, sale_price
+  • sku, stock, manage_stock
+  • categories, tags
+  • images (src, name, alt)
+  • attributes (name, options, visible, variation)
+  • meta_data, dimensions, weight
+  • tax_status, shipping_class, etc.
+
+--------------------------------------------------------------------------------
+SECURITY & NOTES
+--------------------------------------------------------------------------------
+- Bearer token required for all endpoints
+- Sync table prevents duplicate POS IDs
+- Uses WooCommerce REST API v3 internally
+- Meta flag '_pos_product' identifies synced products
+
+--------------------------------------------------------------------------------
+Developed for: POS to WooCommerce Product Sync
+Version: 1.2
+Last Updated: October 31, 2025
+
+================================================================================

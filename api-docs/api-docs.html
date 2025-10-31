@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>POS Product Sync REST API - Documentation</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        @page { size: A4; margin: 1.5cm; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f9f9fb; color: #202124; line-height: 1.7; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; padding: 35px; text-align: center; border-radius: 12px 12px 0 0; margin: -20px -20px 30px; }
+        header h1 { font-size: 2.4rem; margin: 0 0 10px; font-weight: 600; }
+        header p { font-size: 1.2rem; opacity: 0.95; }
+        .section { margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px dashed #e0e0e0; }
+        .section:last-child { border-bottom: none; }
+        h2 { color: #1a73e8; font-size: 1.6rem; margin: 28px 0 16px; padding-bottom: 8px; border-bottom: 3px solid #1a73e8; display: inline-block; font-weight: 600; }
+        h3 { color: #333; font-size: 1.3rem; margin: 20px 0 10px; }
+        h4 { color: #d93025; font-size: 1.1rem; margin: 15px 0 8px; }
+        pre { background: #1e1e1e !important; padding: 18px; border-radius: 10px; overflow-x: auto; margin: 15px 0; position: relative; }
+        code { font-family: 'Fira Code', 'Courier New', monospace; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: #1a73e8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .copy-btn:hover { background: #0d47a1; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #f5f7fa; font-weight: 600; color: #1a73e8; }
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: white; }
+        .get { background: #137333; }
+        .post { background: #1565c0; }
+        .put { background: #e65100; }
+        .delete { background: #c62828; }
+        .error { background: #ffebee; border-left: 5px solid #d93025; padding: 12px; margin: 12px 0; border-radius: 0 8px 8px 0; font-family: monospace; }
+        .note { background: #e8f5e9; border-left: 5px solid #4caf50; padding: 14px; margin: 16px 0; border-radius: 0 8px 8px 0; font-size: 0.95rem; }
+        .endpoint { background: #f0f4f8; padding: 14px; border-radius: 8px; margin: 12px 0; font-weight: bold; font-family: 'Courier New', monospace; color: #1a73e8; border-left: 4px solid #1a73e8; }
+        .footer { text-align: center; padding: 30px; background: #1a1a1a; color: #aaa; font-size: 0.95rem; border-radius: 0 0 12px 12px; margin: 40px -20px -20px; }
+        .footer strong { color: #fff; }
+        .footer .highlight { color: #4CAF50; font-weight: bold; }
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; margin: 0; padding: 10px; }
+            pre { background: #f8f8f8 !important; color: #333 !important; }
+            .copy-btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <header>
+        <h1>POS Product Sync REST API</h1>
+        <p>Real-time Product Sync | WooCommerce v3 Compatible</p>
+    </header>
+
+    <!-- Base URL -->
+    <div class="section">
+        <h2>Base URL</h2>
+        <pre><code class="language-text">https://yourdomain.com/wp-json/pos/v1</code></pre>
+    </div>
+
+    <!-- Authentication -->
+    <div class="section">
+        <h2>Authentication</h2>
+        <pre><code class="language-js">headers: { 'Authorization': 'Bearer YOUR_JWT_TOKEN' }</code></pre>
+        <div class="note">Invalid token → 401/403</div>
+    </div>
+
+    <!-- Endpoints -->
+    <div class="section">
+        <h2>Endpoints</h2>
+        <table>
+            <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+            <tr><td><span class="badge get">GET</span></td><td><code>/products</code></td><td>Get all synced</td></tr>
+            <tr><td><span class="badge get">GET</span></td><td><code>/product/{id}</code></td><td>Get by POS ID</td></tr>
+            <tr><td><span class="badge post">POST</span></td><td><code>/product</code></td><td>Create</td></tr>
+            <tr><td><span class="badge put">PUT</span></td><td><code>/product/{id}</code></td><td>Update by POS ID</td></tr>
+            <tr><td><span class="badge delete">DELETE</span></td><td><code>/product/{id}</code></td><td>Delete by POS ID</td></tr>
+        </table>
+    </div>
+
+    <!-- 1. GET All -->
+    <div class="section">
+        <h2>1. Get All POS Products</h2>
+        <div class="endpoint">GET /products</div>
+        <pre><code class="language-js">fetch('https://yourdomain.com/wp-json/pos/v1/products', {
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(r => r.json())
+.then(d => console.log(d));</code></pre>
+
+        <h4>Possible Errors</h4>
+        <div class="error">401: { "status": "error", "message": "Authorization header missing" }</div>
+        <div class="error">403: { "status": "error", "message": "Invalid token" }</div>
+        <div class="error">500: { "status": "error", "message": "WooCommerce API error" }</div>
+    </div>
+
+    <!-- 2. GET Single -->
+    <div class="section">
+        <h2>2. Get Single Product</h2>
+        <div class="endpoint">GET /product/123</div>
+        <pre><code class="language-js">fetch('https://yourdomain.com/wp-json/pos/v1/product/123', {
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(r => r.json())
+.then(d => console.log(d));</code></pre>
+
+        <h4>Possible Errors</h4>
+        <div class="error">404: { "status": "false", "message": "Product not found" }</div>
+        <div class="error">401/403: Invalid token</div>
+    </div>
+
+    <!-- 3. POST Create -->
+    <div class="section">
+        <h2>3. Create Product</h2>
+        <div class="endpoint">POST /product</div>
+        <pre><code class="language-js">fetch('https://yourdomain.com/wp-json/pos/v1/product', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    pos_id: 999,
+    data: { name: "T-Shirt", regular_price: "29.99" }
+  })
+})
+.then(r => r.json())
+.then(d => console.log(d));</code></pre>
+
+        <h4>Possible Errors</h4>
+        <div class="error">400: { "status": "error", "message": "POS id is required" }</div>
+        <div class="error">400: { "status": "error", "message": "Product data is required" }</div>
+        <div class="error">409: { "status": "error", "message": "Product already exists" }</div>
+        <div class="error">500: { "status": "error", "message": "Failed to insert POS record" }</div>
+        <div class="error">WooCommerce: { "code": "woocommerce_rest_product_invalid", "message": "..." }</div>
+    </div>
+
+    <!-- 4. PUT Update -->
+    <div class="section">
+        <h2>4. Update Product</h2>
+        <div class="endpoint">PUT /product/999</div>
+        <pre><code class="language-js">fetch('https://yourdomain.com/wp-json/pos/v1/product/999', {
+  method: 'PUT',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    data: { regular_price: "34.99" }
+  })
+})
+.then(r => r.json())
+.then(d => console.log(d));</code></pre>
+
+        <h4>Possible Errors</h4>
+        <div class="error">400: { "status": "error", "message": "POS id is required" }</div>
+        <div class="error">400: { "status": "error", "message": "Product data is required" }</div>
+        <div class="error">404: { "status": "error", "message": "Product not found" }</div>
+        <div class="error">WooCommerce: { "code": "woocommerce_rest_cannot_edit", "message": "..." }</div>
+    </div>
+
+    <!-- 5. DELETE -->
+    <div class="section">
+        <h2>5. Delete Product</h2>
+        <div class="endpoint">DELETE /product/999</div>
+        <pre><code class="language-js">fetch('https://yourdomain.com/wp-json/pos/v1/product/999', {
+  method: 'DELETE',
+  headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+})
+.then(r => r.json())
+.then(d => console.log(d));</code></pre>
+
+        <h4>Possible Errors</h4>
+        <div class="error">400: { "status": "error", "message": "POS id is required" }</div>
+        <div class="error">404: { "status": "error", "message": "Product not found" }</div>
+        <div class="error">500: { "status": "error", "message": "Failed to delete from sync table" }</div>
+    </div>
+
+    <!-- Error Codes Table -->
+    <div class="section">
+        <h2>Common Error Codes</h2>
+        <table>
+            <tr><th>Code</th><th>Description</th><th>Source</th></tr>
+            <tr><td>400</td><td>Missing required fields</td><td>POS Sync</td></tr>
+            <tr><td>401</td><td>Authorization missing</td><td>POS Sync</td></tr>
+            <tr><td>403</td><td>Invalid token</td><td>POS Sync</td></tr>
+            <tr><td>404</td><td>Product not found</td><td>POS Sync</td></tr>
+            <tr><td>409</td><td>POS ID already exists</td><td>POS Sync</td></tr>
+            <tr><td>500</td><td>Database / API error</td><td>POS or WooCommerce</td></tr>
+            <tr><td>woocommerce_rest_*</td><td>Invalid data, permission</td><td>WooCommerce v3</td></tr>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>POS to WooCommerce Sync API</strong> • Version 1.0.0 • October 31, 2025</p>
+        <p class="highlight">
+            Create & Update supports <strong>all WooCommerce v3 product attributes</strong> — variations, images, meta, tax, shipping, etc.
+        </p>
+    </div>
+</div>
+
+<!-- Prism.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+<!-- Copy Button -->
+<script>
+    document.querySelectorAll('pre code').forEach(block => {
+        const btn = document.createElement('button');
+        btn.textContent = 'Copy';
+        btn.className = 'copy-btn';
+        btn.onclick = () => {
+            navigator.clipboard.writeText(block.textContent);
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 2000);
+        };
+        block.parentElement.appendChild(btn);
+    });
+</script>
+</body>
+</html>

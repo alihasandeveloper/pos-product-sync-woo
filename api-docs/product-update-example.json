@@ -1,0 +1,29 @@
+{
+  "data": {
+    "regular_price": "34.99",
+    "sale_price": "27.99",
+    "stock_quantity": 98,
+    "stock_status": "instock",
+    "short_description": "Updated: Now with improved fabric and better stitching.",
+    "sku": "TSHIRT-BLK-001-UPDATED",
+    "images": [
+      {
+        "src": "https://yourdomain.com/wp-content/uploads/2025/10/tshirt-black-new.jpg",
+        "alt": "Updated Premium Black T-Shirt"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Size",
+        "options": ["S", "M", "L", "XL", "XXL"]
+      }
+    ],
+    "meta_data": [
+      {
+        "key": "last_sync_from_pos",
+        "value": "2025-10-31 14:30:00"
+      }
+    ],
+    "status": "publish"
+  }
+}

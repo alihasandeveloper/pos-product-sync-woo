@@ -1,0 +1,77 @@
+{
+  "pos_id": 1001,
+  "data": {
+    "name": "Premium Cotton T-Shirt - Black",
+    "type": "simple",
+    "regular_price": "29.99",
+    "sale_price": "24.99",
+    "description": "<p>High-quality 100% cotton t-shirt with a soft touch. Perfect for everyday wear. Features a classic crew neck and durable stitching.</p>",
+    "short_description": "Comfortable black cotton t-shirt for daily use.",
+    "sku": "TSHIRT-BLK-001",
+    "manage_stock": true,
+    "stock_quantity": 150,
+    "stock_status": "instock",
+    "backorders": "no",
+    "weight": "0.35",
+    "dimensions": {
+      "length": "70",
+      "width": "50",
+      "height": "2"
+    },
+    "categories": [
+      {
+        "id": 15
+      }
+    ],
+    "tags": [
+      {
+        "id": 22
+      }
+    ],
+    "images": [
+      {
+        "src": "https://yourdomain.com/wp-content/uploads/2025/10/tshirt-black-front.jpg",
+        "name": "tshirt-black-front",
+        "alt": "Premium Black T-Shirt - Front View"
+      },
+      {
+        "src": "https://yourdomain.com/wp-content/uploads/2025/10/tshirt-black-back.jpg",
+        "name": "tshirt-black-back",
+        "alt": "Premium Black T-Shirt - Back View"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Size",
+        "position": 0,
+        "visible": true,
+        "variation": false,
+        "options": ["S", "M", "L", "XL"]
+      },
+      {
+        "name": "Color",
+        "position": 1,
+        "visible": true,
+        "variation": false,
+        "options": ["Black"]
+      }
+    ],
+    "meta_data": [
+      {
+        "key": "_pos_product",
+        "value": "1"
+      },
+      {
+        "key": "pos_source",
+        "value": "central-pos-system"
+      }
+    ],
+    "tax_status": "taxable",
+    "tax_class": "",
+    "sold_individually": false,
+    "shipping_class_id": 0,
+    "reviews_allowed": true,
+    "catalog_visibility": "visible",
+    "status": "publish"
+  }
+}
