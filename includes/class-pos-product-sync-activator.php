@@ -38,7 +38,7 @@ class Pos_Product_Sync_Activator
 
         $sql = "CREATE TABLE $table_name (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-            pos_id BIGINT(20) UNSIGNED NOT NULL,
+            pos_product_id BIGINT(20) UNSIGNED NOT NULL,
             product_id BIGINT(20) UNSIGNED NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
